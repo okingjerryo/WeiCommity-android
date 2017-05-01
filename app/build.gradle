@@ -47,7 +47,7 @@ dependencies {
     compile group: 'commons-io', name: 'commons-io', version: '2.5'
 
 //json串儿
-    compile group: 'org.json', name: 'json', version: '20160810'
+    //compile group: 'org.json', name: 'json', version: '20160810'
 
 
     compile 'com.android.support:appcompat-v7:25.3.0'

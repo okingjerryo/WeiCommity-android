@@ -64,11 +64,6 @@
         </activity-alias>
 
         <activity
-            android:name="com.mob.tools.MobUIShell"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar"
-            android:windowSoftInputMode="stateHidden|adjustResize" />
-        <activity
             android:name=".Activity.LoginActivity"
             android:launchMode="standard"
             android:screenOrientation="portrait"></activity>
