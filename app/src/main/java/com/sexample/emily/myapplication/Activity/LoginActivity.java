@@ -157,43 +157,40 @@ public class LoginActivity extends Activity {
 //
 //
 //        }.execute();
-        MyAsyncTask asyncTask = (MyAsyncTask) new MyAsyncTask(new MyAsyncTask.AsyncResponse() {
-            @Override
-            public void processFinish(HttpJson output) {
-                if( output.getStatusCode() != 270) {
-                    if (output.getStatusCode() == 400) {
-                        String thisUUid = (String) output.getClassObject();
-                        //tym
-                        Intent intent = new Intent();
-                        intent.setClass(LoginActivity.this, MainActivity.class);
-                        startActivity(intent);
+        MyAsyncTask asyncTask = (MyAsyncTask) new MyAsyncTask((HttpJson output) -> {
 
-                    } else {
-                        Context mContext = LoginActivity.this;
-                        AlertDialog.Builder builder = new AlertDialog.Builder(mContext);//AlertDialog有两个版本support V7.app兼容包，23支持新的6.0版如果增加了新的控件，如果想在4.0也用那个控件那么就用这个支持低版本
-                        builder.setTitle("认证出错")//构建器模式，当new一个string view对象都需要构造器。设置的属性很多的时候会比较方便。比较灵活
+            if( output.getStatusCode() != 270) {
+                if (output.getStatusCode() == 400) {
+                    String thisUUid = (String) output.getClassObject();
+                    //tym
+                    Intent intent = new Intent();
+                    intent.setClass(LoginActivity.this, MainActivity.class);
+                    startActivity(intent);
 
-                                .setMessage(output.getMessage())
-                                .setPositiveButton("确认", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        dialog.dismiss();
-                                    }
-                                });
+                } else {
+                    Context mContext = LoginActivity.this;
+                    AlertDialog.Builder builder = new AlertDialog.Builder(mContext);//AlertDialog有两个版本support V7.app兼容包，23支持新的6.0版如果增加了新的控件，如果想在4.0也用那个控件那么就用这个支持低版本
+                    builder.setTitle("认证出错")//构建器模式，当new一个string view对象都需要构造器。设置的属性很多的时候会比较方便。比较灵活
+
+                            .setMessage(output.getMessage())
+                            .setPositiveButton("确认", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            });
 
 
-                        AlertDialog dialog = builder.create();
-                        dialog.show();
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
 
-                    }
-                }else {
-                    Toast.makeText(getBaseContext(), "网络异常，未连接到服务器", Toast.LENGTH_LONG).show();
                 }
+            }else {
+                Toast.makeText(getBaseContext(), "网络异常，未连接到服务器", Toast.LENGTH_LONG).show();
             }
-
         }) {
             @Override
-            protected Object doInBackground(Object[] params) {
+            protected Object doInBackground(Object... params) {
                 return GetServerResponse(json);
             }
         }.execute();
@@ -256,6 +253,7 @@ public class LoginActivity extends Activity {
         // R.string.Connection+"";
         urlString+="login";
         return new GetFromServer().execute(urlString,Json);
+
 
     }
 

@@ -8,7 +8,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
@@ -25,7 +24,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -39,10 +37,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.sexample.emily.myapplication.R;
-import com.sexample.emily.myapplication.Util.GetFromServer;
-import com.sexample.emily.myapplication.Util.HttpJson;
-import com.sexample.emily.myapplication.Util.MyAsyncTask;
-import com.sexample.emily.myapplication.base.Utils;
+import com.sexample.emily.myapplication.Util.*;
+import com.sexample.emily.myapplication.base.SavePhotoUtils;
 import com.sexample.emily.myapplication.ormlite.Bean.Login;
 import com.sexample.emily.myapplication.ormlite.dao.UserDao;
 import com.sexample.emily.myapplication.ormlite.db.DBHelper;
@@ -67,11 +63,15 @@ public class RegistActivity extends AppCompatActivity implements LoaderCallbacks
     /**
      * Id to identity READ_CONTACTS permission request.
      */
+
     private static final int REQUEST_READ_CONTACTS = 0;
     private String imagePath=null;
     private String mRegistType=null;
     protected static Uri tempUri;
     DBHelper helper = new DBHelper(this);
+    private ImageView iv_personal_icon;
+    //调用截取照片服务
+    showChoosePic test=new showChoosePic(this,RegistActivity.this);
     /**
      * A dummy authentication store containing known user names and passwords.
      * TODO: remove after connecting to a real authentication system.
@@ -89,7 +89,16 @@ public class RegistActivity extends AppCompatActivity implements LoaderCallbacks
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
-    private ImageView iv_personal_icon;
+
+
+    public ImageView getIv_personal_icon() {
+        return iv_personal_icon;
+    }
+
+    public void setIv_personal_icon(ImageView iv_personal_icon) {
+        this.iv_personal_icon = iv_personal_icon;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -122,100 +131,23 @@ public class RegistActivity extends AppCompatActivity implements LoaderCallbacks
         mProgressView = findViewById(R.id.login_progress);
         Button btn_change = (Button) findViewById(R.id.btn_change);
         iv_personal_icon = (ImageView) findViewById(R.id.iv_personal_icon);
+        test.setIv_personal_icon(iv_personal_icon);
         btn_change.setOnClickListener(new OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                showChoosePicDialog();
+                test.showChoosePicDialog();
             }
         });
     }
 
 
     /*showChoosePicDialog*/
-    protected void showChoosePicDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("设置头像");
-        String[] items = new String[]{"选择本地照片", "拍照"};
-        builder.setNegativeButton("取消", (android.content.DialogInterface.OnClickListener)null);
-        builder.setItems(items, new android.content.DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int which) {
-                switch(which) {
-                    case 0:
-                        Intent openAlbumIntent = new Intent("android.intent.action.GET_CONTENT");
-                        openAlbumIntent.setType("image/*");
-                        RegistActivity.this.startActivityForResult(openAlbumIntent, 0);
-                        break;
-                    case 1:
-                        Intent openCameraIntent = new Intent("android.media.action.IMAGE_CAPTURE");
-                        RegistActivity.tempUri = Uri.fromFile(new File(Environment.getExternalStorageDirectory(), "image.jpg"));
-                        openCameraIntent.putExtra("output", RegistActivity.tempUri);
-                        RegistActivity.this.startActivityForResult(openCameraIntent, 1);
-                }
-
-            }
-        });
-        builder.create().show();
-    }
-
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        //调用照片 以及获得保存的照片路径
         super.onActivityResult(requestCode, resultCode, data);
-        if(resultCode == -1) {
-            switch(requestCode) {
-                case 0:
-                    this.startPhotoZoom(data.getData());
-                    break;
-                case 1:
-                    this.startPhotoZoom(tempUri);
-                    break;
-                case 2:
-                    if(data != null) {
-                        this.setImageToView(data);
-                    }
-            }
-        }
-
+        imagePath = test.onActivityResult(requestCode,resultCode,data);
     }
-
-    protected void startPhotoZoom(Uri uri) {
-        if(uri == null) {
-            Log.i("tag", "The uri is not exist.");
-        }
-
-        tempUri = uri;
-        Intent intent = new Intent("com.android.camera.action.CROP");
-        intent.setDataAndType(uri, "image/*");
-        intent.putExtra("crop", "true");
-        intent.putExtra("aspectX", 1);
-        intent.putExtra("aspectY", 1);
-        intent.putExtra("outputX", 150);
-        intent.putExtra("outputY", 150);
-        intent.putExtra("return-data", true);
-        this.startActivityForResult(intent, 2);
-    }
-
-    protected void setImageToView(Intent data) {
-        Bundle extras = data.getExtras();
-        if(extras != null) {
-            Bitmap photo = (Bitmap)extras.getParcelable("data");
-            photo = Utils.toRoundBitmap(photo, tempUri);
-            this.iv_personal_icon.setImageBitmap(photo);
-            imagePath = Utils.savePhoto(photo, Environment.getExternalStorageDirectory().getAbsolutePath(), String.valueOf(System.currentTimeMillis()));
-            this.setImageUrl(photo);
-        }
-
-    }
-
-    protected String  setImageUrl(Bitmap bitmap) {
-        String imagePath = Utils.savePhoto(bitmap, Environment.getExternalStorageDirectory().getAbsolutePath(), String.valueOf(System.currentTimeMillis()));
-
-        Log.e("imagePath", imagePath);
-
-
-        return imagePath;
-    }
-
-
     /*end*/
 
     private void populateAutoComplete() {
@@ -335,42 +267,40 @@ public class RegistActivity extends AppCompatActivity implements LoaderCallbacks
             // perform the user login attempt.
             showProgress(true);
           //  mAuthTask = new UserLoginTask(email, password,mRegistType);
-            MyAsyncTask asyncTask = (MyAsyncTask) new MyAsyncTask(new MyAsyncTask.AsyncResponse() {
+            MyAsyncTask asyncTask = (MyAsyncTask) new MyAsyncTask(result -> {
 
-                @Override
-                public void processFinish(HttpJson output) {
-                    if (output.getStatusCode()==400) {
-                        Toast.makeText(getBaseContext(), "注册成功", Toast.LENGTH_LONG).show();
-                       // String thisUUid = (String) output.getClassObject();
-                        //tym
-                        Intent intent = new Intent(RegistActivity.this, MainActivity.class);
+                HttpJson output = (HttpJson) result;
+                if (output.getStatusCode()==400) {
+                    Toast.makeText(getBaseContext(), "注册成功", Toast.LENGTH_LONG).show();
+                   // String thisUUid = (String) output.getClassObject();
+                    //tym
+                    Intent intent = new Intent(RegistActivity.this, MainActivity.class);
 //                        intent.putExtra("email", email);
 //                        intent.putExtra("thisUUid", thisUUid);
-                        startActivity(intent);
+                    startActivity(intent);
 
-                    }else{
-                        Context mContext =RegistActivity.this ;
-                        AlertDialog.Builder builder=new AlertDialog.Builder(mContext);//AlertDialog有两个版本support V7.app兼容包，23支持新的6.0版如果增加了新的控件，如果想在4.0也用那个控件那么就用这个支持低版本
-                        builder.setTitle("注册失败")//构建器模式，当new一个string view对象都需要构造器。设置的属性很多的时候会比较方便。比较灵活
+                }else{
+                    Context mContext1 =RegistActivity.this ;
+                    AlertDialog.Builder builder=new AlertDialog.Builder(mContext1);//AlertDialog有两个版本support V7.app兼容包，23支持新的6.0版如果增加了新的控件，如果想在4.0也用那个控件那么就用这个支持低版本
+                    builder.setTitle("注册失败")//构建器模式，当new一个string view对象都需要构造器。设置的属性很多的时候会比较方便。比较灵活
 
-                                .setMessage(output.getMessage())
-                                .setPositiveButton("确认"+getResources().getString(R.string.Connection), new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        dialog.dismiss();
-                                    }
-                                });
-                        AlertDialog dialog=builder.create();
-                        dialog.show();
-                        showProgress(false);
+                            .setMessage(output.getMessage())
+                            .setPositiveButton("确认"+getResources().getString(R.string.Connection), new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            });
+                    AlertDialog dialog=builder.create();
+                    dialog.show();
+                    showProgress(false);
 
-                    }
                 }
-
-
             }) {
+
+
                 @Override
-                protected Object doInBackground(Object[] params) { // TODO: attempt authentication against a network service.
+                protected Object doInBackground(Object... params) { // TODO: attempt authentication against a network service.
 
                     //0.请求的servlet地址的构造
                     String targetIP = getResources().getString(R.string.Connection);

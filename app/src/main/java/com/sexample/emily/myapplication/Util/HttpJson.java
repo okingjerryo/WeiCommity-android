@@ -21,7 +21,7 @@ import java.io.StringWriter;
  *      2.无 Object需求 直接获取信息即可
  *      3.若要获取Object 先检查getClassName 看看与目标类是否符合
  *      4.符合再取调用 getClassObject 取Object，不符合请重发请求
- * Created by uryuo on 17/4/6.
+ * Created by uryuo on 17/4/6
  */
 public class HttpJson {
     private int statusCode = 270;   //默认传递正常
@@ -32,8 +32,6 @@ public class HttpJson {
     private String jsonString = ""; //json格式的串
     //封装Json
     public void constractJsonString(){
-
-
 
         try {
             jsonObject.put("statusCode", statusCode);
@@ -70,6 +68,7 @@ public class HttpJson {
     public String getPara(String key) throws JSONException {
         return jsonObject.getString(key);
     }
+
     public HttpJson() {
         super();
     }

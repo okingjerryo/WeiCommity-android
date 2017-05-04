@@ -1,13 +1,7 @@
 package com.sexample.emily.myapplication.base;
 
 
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
-import android.graphics.Rect;
-import android.graphics.RectF;
+import android.graphics.*;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.Bitmap.Config;
 import android.graphics.PorterDuff.Mode;
@@ -17,55 +11,37 @@ import android.support.v4.content.ContextCompat;
 
 import com.sexample.emily.myapplication.Activity.RegistActivity;
 import com.sexample.emily.myapplication.R;
+import org.apache.commons.io.FileUtils;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 
 /**
  * Created by Emily on 2017/4/24.
  */
 
 
-public class Utils {
-    public Utils() {
+public class SavePhotoUtils {
+    public SavePhotoUtils() {
     }
 
     public static String savePhoto(Bitmap photoBitmap, String path, String photoName) {
         String localPath = null;
         if(Environment.getExternalStorageState().equals("mounted")) {
             File dir = new File(path);
+            try {
             if(!dir.exists()) {
-                dir.mkdirs();
+                    FileUtils.forceMkdir(dir);
             }
 
-            File photoFile = new File(path, photoName + ".png");
-            FileOutputStream fileOutputStream = null;
+            //File photoFile = new File(path, photoName + ".png");
+            File photoFile = new File(path,photoName+".png");
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            photoBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
 
-            try {
-                fileOutputStream = new FileOutputStream(photoFile);
-                if(photoBitmap != null && photoBitmap.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream)) {
-                    localPath = photoFile.getPath();
-                    fileOutputStream.flush();
-                }
-            } catch (FileNotFoundException var18) {
-                photoFile.delete();
-                localPath = null;
-                var18.printStackTrace();
-            } catch (IOException var19) {
-                photoFile.delete();
-                localPath = null;
-                var19.printStackTrace();
-            } finally {
-                try {
-                    if(fileOutputStream != null) {
-                        fileOutputStream.close();
-                        fileOutputStream = null;
-                    }
-                } catch (IOException var17) {
-                    var17.printStackTrace();
-                }
+                FileUtils.writeByteArrayToFile(photoFile,out.toByteArray());
+                localPath = photoFile.getPath();
+            } catch (IOException e) {
+                e.printStackTrace();
 
             }
         }
